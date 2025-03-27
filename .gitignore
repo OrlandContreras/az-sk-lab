@@ -124,6 +124,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+.env
 .venv
 env/
 venv/
@@ -176,4 +177,8 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python
 
 # UV
-uv.lock
+uv.lock# Archivos de entorno con información sensible
+**/.env
+create_kernel/.env
+crew_ai_agents/.env
+sk_service/.env

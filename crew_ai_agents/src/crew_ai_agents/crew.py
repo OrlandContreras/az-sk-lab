@@ -1,6 +1,25 @@
-from crewai import Agent, Crew, Process, Task
+from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
+from dotenv import load_dotenv
+import os
 
+# Importar nuestra configuración personalizada
+from crew_ai_agents.config.litellm_config import get_litellm_config
+
+# Cargar variables de entorno
+load_dotenv()
+
+# Obtener configuración LiteLLM para Azure
+litellm_config = get_litellm_config()
+
+# Crear una instancia de LLM según la documentación oficial
+azure_llm = LLM(
+    model=litellm_config["model"],
+    api_key=litellm_config["api_key"],
+    api_base=litellm_config["api_base"],
+    api_version=litellm_config["api_version"],
+    temperature=0.7
+)
 
 @CrewBase
 class CrewAiAgents():
@@ -13,14 +32,16 @@ class CrewAiAgents():
 	def researcher(self) -> Agent:
 		return Agent(
 			config=self.agents_config['researcher'],
-			verbose=True
+			verbose=True,
+			llm=azure_llm
 		)
 
 	@agent
 	def reporting_analyst(self) -> Agent:
 		return Agent(
 			config=self.agents_config['reporting_analyst'],
-			verbose=True
+			verbose=True,
+			llm=azure_llm
 		)
 
 
@@ -46,5 +67,4 @@ class CrewAiAgents():
 			tasks=self.tasks, # Automatically created by the @task decorator
 			process=Process.sequential,
 			verbose=True,
-
 		)
