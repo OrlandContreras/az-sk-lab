@@ -2,9 +2,14 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from datetime import datetime
 import warnings
+import os
+from dotenv import load_dotenv
 
 # Importar la clase CrewAiAgents
 from crew_ai_agents.crew import CrewAiAgents
+
+# Cargar variables de entorno
+load_dotenv()
 
 # Ignorar ciertas advertencias
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
@@ -21,7 +26,6 @@ class ReplayRequest(BaseModel):
 
 class TestRequest(BaseModel):
     n_iterations: int
-    openai_model_name: str
 
 @app.post("/run")
 async def run_endpoint():
@@ -68,18 +72,28 @@ async def replay_endpoint(request: ReplayRequest):
 @app.post("/test")
 async def test_endpoint(request: TestRequest):
     """
-    Ejecuta un test del crew con un número de iteraciones y un modelo de OpenAI especificado.
+    Ejecuta un test del crew con un número limitado de iteraciones.
     """
     inputs = {
         "topic": "AI LLMs",
         "current_year": str(datetime.now().year)
     }
+    
     try:
-        CrewAiAgents().crew().test(
+        # Crear una instancia de CrewAiAgents
+        crew_instance = CrewAiAgents()
+        crew = crew_instance.crew()
+        
+        # Usar el mismo LLM configurado en el crew para evaluación
+        eval_agent = crew_instance.researcher()
+        
+        # Ejecutar el test con los parámetros necesarios
+        crew.test(
             n_iterations=request.n_iterations,
-            openai_model_name=request.openai_model_name,
-            inputs=inputs
+            inputs=inputs,
+            eval_llm=eval_agent.llm
         )
+        
         return {"message": "Crew test executed successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred while testing the crew: {e}")
